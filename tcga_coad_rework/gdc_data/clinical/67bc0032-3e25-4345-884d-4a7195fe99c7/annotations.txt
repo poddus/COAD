@@ -1,0 +1,2 @@
+id	submitter_id	entity_type	entity_id	category	classification	created_datetime	status	notes
+4309aa6f-e3a2-5665-a443-6e4e6d4a40af	673	case	86a9e44f-728e-48e4-9e1b-682b023f7c0a	Qualification metrics changed	Notification	2010-09-02T00:00:00	Approved	[intgen.org]: Changes to qualification metrics
