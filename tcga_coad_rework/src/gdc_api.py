@@ -3,8 +3,6 @@ from typing import Tuple, List, Dict
 import requests
 import logging
 
-logging.basicConfig(level=logging.INFO)
-
 CLINICAL_PAYLOAD = {
     'filters': {
         'op': 'and',
