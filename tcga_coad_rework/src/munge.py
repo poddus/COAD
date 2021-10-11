@@ -46,7 +46,9 @@ def munge_clinical() -> pd.DataFrame:
         clin_df = extract_tumor_location(clin_file_df)
 
     if config.REMOVE_ANNOTATED_CASES:
+        log_n_annotated_cases = len(clin_df[clin_df.is_annotated == True].index)
         clin_df.drop(clin_df[clin_df.is_annotated == True].index, inplace=True)
+        logging.info('{} annotated cases removed from clinical cases.'.format(log_n_annotated_cases))
 
     if config.UPDATE_CACHE:
         store_df_in_cache(clin_df, 'clin_df')
@@ -77,26 +79,34 @@ def munge_genome() -> pd.DataFrame:
             header=5
         )
 
-    # TODO: something in these next blocks does not work. in the original, the first step was the intersection of sets
-    #  with the clinical df, but ideally that should only be done afterwards when they are combined
+    # remove NaNs
+    log_n_hgvsc_null = len(maf_df[maf_df['HGVSc'].isnull()])
+    maf_df.drop(maf_df[maf_df['HGVSc'].isnull()].index, inplace=True)
+    logging.info('{} mutations without HGVSc descriptor were removed'.format(log_n_hgvsc_null))
+
     if config.REMOVE_KNRAS:
         k_ras_cases = maf_df.loc[maf_df['Hugo_Symbol'] == 'KRAS']['case_id']
         n_ras_cases = maf_df.loc[maf_df['Hugo_Symbol'] == 'NRAS']['case_id']
         kn_ras_cases_set = set(k_ras_cases.tolist() + n_ras_cases.tolist())
-        entries_of_cases_with_kn_ras_mutations = maf_df.loc[maf_df[
-            'case_id'].isin(kn_ras_cases_set)].index
+        entries_of_cases_with_kn_ras_mutations = maf_df.loc[maf_df['case_id'].isin(kn_ras_cases_set)].index
         maf_df.drop(entries_of_cases_with_kn_ras_mutations, inplace=True)
+        logging.info('{} cases containing k- or n-RAS mutations were removed'.format(len(kn_ras_cases_set)))
 
     if config.REMOVE_SYNONYMOUS_VARIANTS:
-        synonymous_variants = maf_df.loc[
-            maf_df['Consequence'] == 'synonymous_variant'].index
+        synonymous_variants = maf_df.loc[maf_df['Consequence'] == 'synonymous_variant'].index
         maf_df.drop(synonymous_variants, inplace=True)
+        logging.info('{} synonymous variants were removed'.format(len(synonymous_variants)))
 
     # Unique Variant Identifier
     # create unique variant ID, store in column 'uvi'
     # note, there are some NaN in the data set
     maf_df.loc[:, 'uvi'] = pd.Series(maf_df['Hugo_Symbol'] + ':' + maf_df['HGVSc'], index=maf_df.index)
     case_to_mut_df = pd.DataFrame(False, index=maf_df['case_id'].unique(), columns=maf_df.uvi.unique())
+    # this following computation is intense
+    for case, mutations in maf_df.groupby('case_id')['uvi']:
+        for mut in mutations:
+            case_to_mut_df.at[case, mut] = True
+    # TODO: how many UVIs are unique to a single case? how many are shared amount multiple cases?
 
     if config.REMOVE_HYPERMUTATED:
         for case in case_to_mut_df.index:

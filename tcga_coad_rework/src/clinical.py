@@ -6,6 +6,7 @@ import pandas as pd
 
 from src import config
 
+
 def extract_tumor_location(df):
     tumor_location = {}
     for case, file in df.iterrows():
@@ -18,18 +19,23 @@ def extract_tumor_location(df):
                 tree = et.parse(f)
                 root = tree.getroot()
 
+                log_n_not_left_or_right = 0
                 anatomic_neoplasm_subdivision = root[1][34].text
                 if anatomic_neoplasm_subdivision in config.ANATOMIC_RIGHT:
                     tumor_location[case] = False
                 elif anatomic_neoplasm_subdivision in config.ANATOMIC_LEFT:
                     tumor_location[case] = True
                 elif anatomic_neoplasm_subdivision is None:
-                    logging.debug('no tumor location for case uuid: {}'.format(case))
+                    logging.info('no tumor location for case uuid: {}'.format(case))
                     tumor_location[case] = None
                 else:
                     tumor_location[case] = None
+                    log_n_not_left_or_right += 1
                     logging.debug(
                         '"{}" for case {} not in right or left group'.format(anatomic_neoplasm_subdivision, case))
+            logging.info(
+                '{} cases were not considered as they are neither `left` nor `right`'.format(log_n_not_left_or_right))
+
     df['tumor_left'] = pd.Series(tumor_location)
     df.drop(['file_uuid', 'filename'], axis=1, inplace=True)
     return df
@@ -46,4 +52,5 @@ def mark_annotated_cases(df):
         else:
             is_annotated[case] = False
     df['is_annotated'] = pd.Series(is_annotated)
+    logging.info('{} cases have clinical annotations'.format(len(is_annotated)))
     return df

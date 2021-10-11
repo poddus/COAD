@@ -1,6 +1,10 @@
+import pandas as pd
 import logging
 
+
 logging.basicConfig(level=logging.DEBUG)
+
+pd.set_option('display.expand_frame_repr', False)
 
 USE_CACHED_DATA = False
 UPDATE_CACHE = True
