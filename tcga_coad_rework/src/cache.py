@@ -2,6 +2,7 @@ import pandas as pd
 import json
 
 
+# TODO: these files are large. perhaps they could be compressed before saving to disc?
 def write_df_to_cache(df, name: str) -> None:
     path = '../cache/' + 'dataframes/' + name + '.csv'
     df.to_csv(path)
