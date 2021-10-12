@@ -3,6 +3,9 @@ from typing import Tuple, List, Dict
 import requests
 import logging
 
+from src import config
+from src.cache import read_api_response_from_cache, write_api_response_to_cache
+
 CLINICAL_PAYLOAD = {
     'filters': {
         'op': 'and',
@@ -63,10 +66,22 @@ class GDCQuery:
 
 
 def get_case_association(payload: Dict) -> Dict:
+    if config.USE_CACHED_API_RESPONSE:
+        if payload == CLINICAL_PAYLOAD:
+            return read_api_response_from_cache('clin_response')
+        elif payload == TRANSCRIPTOME_PAYLOAD:
+            return read_api_response_from_cache('trans_response')
+
     query = GDCQuery(payload)
     logging.debug('API Query: {}'.format(query.response.request.url))
     decoded = json.loads(query.data)
     association = {}
     for hit in decoded['data']['hits']:
         association[hit['cases'][0]['case_id']] = hit['id']
+
+    if config.UPDATE_CACHE:
+        if payload == CLINICAL_PAYLOAD:
+            write_api_response_to_cache(association, 'clin_response')
+        elif payload == TRANSCRIPTOME_PAYLOAD:
+            write_api_response_to_cache(association, 'trans_response')
     return association

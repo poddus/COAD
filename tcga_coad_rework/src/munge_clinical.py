@@ -5,6 +5,9 @@ from xml.etree import ElementTree as et
 import pandas as pd
 
 from src import config
+from src.cache import read_df_from_cache, write_df_to_cache
+from src.gdc_api import get_case_association, CLINICAL_PAYLOAD
+from src.munge_common import extract_uuid_and_filenames_from_manifest, build_association_df
 
 
 def extract_tumor_location(df):
@@ -54,3 +57,25 @@ def mark_annotated_cases(df):
     df['is_annotated'] = pd.Series(is_annotated)
     logging.info('{} cases have clinical annotations'.format(len(is_annotated)))
     return df
+
+
+def munge_clinical() -> pd.DataFrame:
+    if config.USE_CACHED_DATA:
+        return read_df_from_cache('clin_df')
+
+    clin_c_to_f = get_case_association(CLINICAL_PAYLOAD)
+    clin_uid_to_fn = extract_uuid_and_filenames_from_manifest(
+        'clinical',
+        '../manifest/gdc_manifest.clinical_supplement.txt')
+    clin_file_df = build_association_df(clin_c_to_f, clin_uid_to_fn)
+    clin_file_df = mark_annotated_cases(clin_file_df)
+    clin_df = extract_tumor_location(clin_file_df)
+
+    if config.MUT_REMOVE_ANNOTATED_CASES:
+        log_n_annotated_cases = len(clin_df[clin_df.is_annotated == True].index)
+        clin_df.drop(clin_df[clin_df.is_annotated == True].index, inplace=True)
+        logging.info('{} annotated cases removed from clinical cases.'.format(log_n_annotated_cases))
+
+    if config.UPDATE_CACHE:
+        write_df_to_cache(clin_df, 'clin_df')
+    return clin_df

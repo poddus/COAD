@@ -1,13 +1,26 @@
-from typing import Any
 import pandas as pd
+import json
 
 
-def store_df_in_cache(df, name: str) -> None:
-    path_no_ext = '../cache/' + 'dataframes/' + name
-    df.to_csv(path_no_ext + '.csv')
+def write_df_to_cache(df, name: str) -> None:
+    path = '../cache/' + 'dataframes/' + name + '.csv'
+    df.to_csv(path)
 
 
-def retrieve_df_from_cache(name: str) -> Any:
-    path_no_ext = '../cache/' + 'dataframes/' + name
-    obj = pd.read_csv(path_no_ext + '.csv')
+def read_df_from_cache(name: str) -> pd.DataFrame:
+    path = '../cache/' + 'dataframes/' + name + '.csv'
+    obj = pd.read_csv(path)
+    return obj
+
+
+def write_api_response_to_cache(response, name: str) -> None:
+    path = '../cache/' + 'gdc_api/' + name + '.json'
+    with open(path, 'w') as f:
+        json.dump(response, f)
+
+
+def read_api_response_from_cache(name: str) -> dict:
+    path = '../cache/' + 'gdc_api/' + name + '.json'
+    with open(path, 'r') as f:
+        obj = json.load(f)
     return obj
