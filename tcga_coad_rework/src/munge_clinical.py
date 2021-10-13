@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from xml.etree import ElementTree as et
+from xml.etree import ElementTree
 import pandas as pd
 
 from src import config
@@ -19,7 +19,7 @@ def extract_tumor_location(df):
             logging.debug('File {}\nCase {}\nDoes not exist!\n--------------'.format(file, case))
         else:
             with open(filepath, 'r') as f:
-                tree = et.parse(f)
+                tree = ElementTree.parse(f)
                 root = tree.getroot()
 
                 log_n_not_left_or_right = 0
@@ -40,7 +40,6 @@ def extract_tumor_location(df):
                 '{} cases were not considered as they are neither `left` nor `right`'.format(log_n_not_left_or_right))
 
     df['tumor_left'] = pd.Series(tumor_location)
-    df.drop(['file_uuid', 'filename'], axis=1, inplace=True)
     return df
 
 
@@ -61,21 +60,24 @@ def mark_annotated_cases(df):
 
 def munge_clinical() -> pd.DataFrame:
     if config.USE_CACHED_DATA:
-        return read_df_from_cache('clin_df')
+        return read_df_from_cache('clin')
 
     clin_c_to_f = get_case_association(CLINICAL_PAYLOAD)
     clin_uid_to_fn = extract_uuid_and_filenames_from_manifest(
         'clinical',
         '../manifest/gdc_manifest.clinical_supplement.txt')
     clin_file_df = build_association_df(clin_c_to_f, clin_uid_to_fn)
-    clin_file_df = mark_annotated_cases(clin_file_df)
-    clin_df = extract_tumor_location(clin_file_df)
 
-    if config.MUT_REMOVE_ANNOTATED_CASES:
-        log_n_annotated_cases = len(clin_df[clin_df.is_annotated == True].index)
-        clin_df.drop(clin_df[clin_df.is_annotated == True].index, inplace=True)
+    if config.REMOVE_ANNOTATED_CASES:
+        clin_file_df = mark_annotated_cases(clin_file_df)
+        log_n_annotated_cases = len(clin_file_df[clin_file_df.is_annotated == True].index)
+        clin_file_df.drop(clin_file_df[clin_file_df.is_annotated == True].index, inplace=True)
         logging.info('{} annotated cases removed from clinical cases.'.format(log_n_annotated_cases))
+        clin_file_df.drop(['is_annotated'], axis=1, inplace=True)
+
+    clin_df = extract_tumor_location(clin_file_df)
+    clin_df.drop(['file_uuid', 'filename'], axis=1, inplace=True)
 
     if config.UPDATE_CACHE:
-        write_df_to_cache(clin_df, 'clin_df')
+        write_df_to_cache(clin_df, 'clin')
     return clin_df

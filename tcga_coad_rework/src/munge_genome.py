@@ -10,7 +10,7 @@ from src.munge_common import extract_uuid_and_filenames_from_manifest
 
 def munge_genome() -> pd.DataFrame:
     if config.USE_CACHED_DATA:
-        return read_df_from_cache('case_to_mut_df')
+        return read_df_from_cache('mut')
 
     # TODO: this is a silly way to get the maf manifest, but at least it's consistent
     mutations_uid_to_fn = extract_uuid_and_filenames_from_manifest(
@@ -65,18 +65,21 @@ def munge_genome() -> pd.DataFrame:
         for case, mutations in maf_df.groupby('case_id')['uvi']:
             for mut in mutations:
                 case_to_mut_df.at[case, mut] = True
+        logging.debug('done')
     else:
         case_to_mut_df = pd.DataFrame(False, index=maf_df['case_id'].unique(), columns=maf_df.Hugo_Symbol.unique())
         logging.debug('generating case_to_mut DataFrame (without uvi). this may take a while...')
         for case, mutations in maf_df.groupby('case_id')['Hugo_Symbol']:
             for mut in mutations:
                 case_to_mut_df.at[case, mut] = True
+        logging.debug('done')
 
     logging.info('counting mutations that only occur once in all cases...')
     log_count_mutations = 0
     for column in case_to_mut_df.columns:
         if case_to_mut_df[column].value_counts()[1] > 1:
             log_count_mutations += 1
+    logging.debug('done')
     logging.info('case_to_mut_df has {} of {} total mutations with more than one occurrence'.format(
         log_count_mutations, len(case_to_mut_df.columns)))
 
@@ -90,6 +93,6 @@ def munge_genome() -> pd.DataFrame:
     logging.info('{} hypermutated cases were removed'.format(log_n_hypermutated))
 
     if config.UPDATE_CACHE:
-        write_df_to_cache(case_to_mut_df, 'case_to_mut_df')
+        write_df_to_cache(case_to_mut_df, 'mut')
 
     return case_to_mut_df

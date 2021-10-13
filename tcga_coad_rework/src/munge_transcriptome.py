@@ -19,7 +19,7 @@ def extract_gz_data():
 
 def munge_transcriptome() -> pd.DataFrame:
     if config.USE_CACHED_DATA:
-        return read_df_from_cache('case_to_trans_df')
+        return read_df_from_cache('trans')
 
     trans_c_to_f = get_case_association(TRANSCRIPTOME_PAYLOAD)
     trans_uid_to_fn = extract_uuid_and_filenames_from_manifest(
@@ -41,10 +41,12 @@ def munge_transcriptome() -> pd.DataFrame:
                 reader = csv.reader(f, delimiter='\t')
                 for row in reader:
                     transcriptome[case][row[0]] = row[1]
+    logging.debug('done')
     logging.debug('converting defaultdict to DataFrame...')
     case_to_trans_df = pd.DataFrame.from_dict(transcriptome, orient='index', dtype='float')
+    logging.debug('done')
 
     if config.UPDATE_CACHE:
-        write_df_to_cache(case_to_trans_df, 'case_to_trans_df')
+        write_df_to_cache(case_to_trans_df, 'trans')
 
     return case_to_trans_df

@@ -2,19 +2,19 @@ import pandas as pd
 import logging
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 pd.set_option('display.expand_frame_repr', False)
 
 # analyses to be prepared and performed
-GENOME_ANALYSIS = True
+GENOME_ANALYSIS = False
 TRANSCRIPTOME_ANALYSIS = True
 
 USE_CACHED_API_RESPONSE = True
 USE_CACHED_DATA = True
-UPDATE_CACHE = False
+UPDATE_CACHE = True
 
-MUT_REMOVE_ANNOTATED_CASES = True
+REMOVE_ANNOTATED_CASES = True
 MUT_REMOVE_KNRAS = True
 MUT_REMOVE_SYNONYMOUS_VARIANTS = True
 MUT_REMOVE_HYPERMUTATED = False

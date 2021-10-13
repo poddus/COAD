@@ -23,5 +23,3 @@ def build_association_df(c_to_f: Dict, uuid_to_filename: Dict) -> pd.DataFrame:
     case_file_filename_df = c_to_f_df.join(uuid_to_filename_df, on='file_uuid')
     case_file_filename_df.dropna(subset=['filename'], inplace=True)
     return case_file_filename_df
-
-
