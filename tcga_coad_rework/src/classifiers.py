@@ -76,13 +76,63 @@ class LogitClassifier:
 
 
 class RFClassifier:
-    def __init__(self, df: pd.DataFrame):
+    def __init__(self, df: pd.DataFrame, n_trees=1000, v=1):
         self.X = df.drop('tumor_left', axis=1)
         self.y = df['tumor_left']
         self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
             self.X, self.y,
             test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE)
 
+        self.classifier = RandomForestClassifier(
+            n_estimators=n_trees,
+            criterion='gini',
+            max_features='sqrt',
+            max_depth=None,
+            min_samples_split=2,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.0,
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.0,
+            bootstrap=True,
+            oob_score=True,
+            n_jobs=-1,
+            random_state=config.CLASSIFIER_RANDOM_STATE,
+            verbose=v,
+            warm_start=False,
+            class_weight=None
+        )
+
+    def fit_whole(self):
+        self.classifier.fit(self.X, self.y)
+
+    def fit_train(self):
+        self.classifier.fit(self.X_train, self.y_train)
+
+    def evaluate_on_test(self) -> Tuple[List, List, List]:
+        y_score = self.classifier.oob_decision_function_
+        fpr, tpr, thresholds = roc_curve(self.y, y_score)
+        return fpr, tpr, thresholds
+
+    @staticmethod
+    def print_roc_curve(fpr, tpr):
+        plt.figure()
+        lw = 2
+        plt.plot(fpr, tpr, color='darkorange',
+                 lw=lw, label='ROC curve (area = {})'.format(auc(fpr, tpr)))
+        plt.plot([0, 1], [0, 1], color='navy', lw=lw, linestyle='--')
+        plt.xlim([0.0, 1.0])
+        plt.ylim([0.0, 1.05])
+        plt.xlabel('False Positive Rate')
+        plt.ylabel('True Positive Rate')
+        plt.title('Receiver operating characteristic example')
+        plt.legend(loc="lower right")
+        plt.show()
+
+    def evaluate(self):
+        """convenience function for evaluating a classifier"""
+        self.fit_train()
+        fpr, tpr, threshold = self.evaluate_on_test()
+        self.print_roc_curve(fpr, tpr)
 
 
 class LogitClassifierTuningCV:

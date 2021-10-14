@@ -256,7 +256,7 @@ class LogitClassifier:
         return right, left
 
 
-class RandomForestClassifier:
+class ARandomForestClassifier:
     def __init__(self, df, n_trees=1000, v=0):
         self.df = df
         self.X = df.drop('tumor_loc_left', axis=1)
@@ -328,7 +328,7 @@ class RandomForestClassifier:
 
             For large numbers of features and large numbers of trees,
             the memory required to store the input matrix for np.std becomes
-            unfeasable. Here, the approach is to scan through all trees
+            Infeasible. Here, the approach is to scan through all trees
             multiple times, selecting only a batch of features at a time
             and then calculating the std dev on that batch. This way we avoid
             loading the entire matrix of possibilities into memory at once.

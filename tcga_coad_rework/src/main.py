@@ -1,7 +1,8 @@
 import pandas as pd
+from matplotlib import pyplot as plt
 
 from src import config
-from src.analysis import analysis
+from src.analysis import classify
 from src.munge_clinical import munge_clinical
 from src.munge_genome import munge_genome
 from src.munge_transcriptome import munge_transcriptome
@@ -31,12 +32,16 @@ def main():
     if config.GENOME:
         mut_df = munge_genome()
         mut_df = join_clin_df(mut_df, clin_df, bool)
-        analysis(mut_df, 'mut')
+        # TODO: Collinearity between features
+        plt.matshow(mut_df.corr())
+        plt.show()
+
+        classify(mut_df, 'mut')
 
     if config.TRANSCRIPTOME:
         trans_df = munge_transcriptome()
         trans_df = join_clin_df(trans_df, clin_df, float)
-        analysis(trans_df, 'trans')
+        classify(trans_df, 'trans')
 
     pass
 
