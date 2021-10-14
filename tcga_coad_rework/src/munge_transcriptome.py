@@ -13,10 +13,6 @@ from src.cache import read_df_from_cache, write_df_to_cache
 from src.munge_common import extract_uuid_and_filenames_from_manifest, build_association_df
 
 
-def extract_gz_data():
-    pass
-
-
 def munge_transcriptome() -> pd.DataFrame:
     if config.USE_CACHED_DATA:
         return read_df_from_cache('trans')

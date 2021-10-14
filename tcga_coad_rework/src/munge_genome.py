@@ -54,11 +54,9 @@ def munge_genome() -> pd.DataFrame:
         logging.info('{} synonymous variants were removed'.format(len(synonymous_variants)))
 
     if config.MUT_USE_UVI:
-        # TODO: this introduces the problem that it inflates the possibility space and results in mutations which
-        #  only occur once in the dataset.
         # create unique variant ID, store in column 'uvi'
         # note, there are some NaN in the data set
-        maf_df.loc[:, 'uvi'] = pd.Series(maf_df['Hugo_Symbol'] + ':' + maf_df['HGVSc'], index=maf_df.index)
+        maf_df.loc[:, 'uvi'] = pd.Series(maf_df['Hugo_Symbol'] + ':' + maf_df['HGVSc'], index=maf_df.index, dtype=str)
         case_to_mut_df = pd.DataFrame(False, index=maf_df['case_id'].unique(), columns=maf_df.uvi.unique())
         # this following computation is intense
         logging.debug('generating case_to_mut DataFrame (with uvi). this may take a while...')
@@ -74,23 +72,25 @@ def munge_genome() -> pd.DataFrame:
                 case_to_mut_df.at[case, mut] = True
         logging.debug('done')
 
-    logging.info('counting mutations that only occur once in all cases...')
-    log_count_mutations = 0
-    for column in case_to_mut_df.columns:
-        if case_to_mut_df[column].value_counts()[1] > 1:
-            log_count_mutations += 1
-    logging.debug('done')
-    logging.info('case_to_mut_df has {} of {} total mutations with more than one occurrence'.format(
-        log_count_mutations, len(case_to_mut_df.columns)))
+    if config.MUT_REMOVE_RARE_VARIANTS:
+        logging.info('finding mutations that only occur once in all cases...')
+        sparse_features = []
+        for column in case_to_mut_df.columns:
+            if case_to_mut_df[column].value_counts()[1] <= config.MUT_RARE_VARIANT_CUTOFF:
+                sparse_features.append(column)
+        logging.debug('done')
+        logging.info('case_to_mut_df has {} of {} total mutations with less than or equal to {} occurrence'.format(
+            len(sparse_features), len(case_to_mut_df.columns), config.MUT_RARE_VARIANT_CUTOFF))
+        case_to_mut_df.drop(sparse_features, axis=1, inplace=True)
 
-    log_n_hypermutated = 0
     if config.MUT_REMOVE_HYPERMUTATED:
+        log_n_hypermutated = 0
         for case in case_to_mut_df.index:
             logging.debug('case: {}\nvalue_count: {}\n'.format(case, case_to_mut_df.loc[case].value_counts()[0]))
             if case_to_mut_df.loc[case].value_counts()[0] > config.MUT_HYPERMUTATION_CUTOFF:
                 case_to_mut_df.drop(case, inplace=True)
                 log_n_hypermutated += 1
-    logging.info('{} hypermutated cases were removed'.format(log_n_hypermutated))
+        logging.info('{} hypermutated cases were removed'.format(log_n_hypermutated))
 
     if config.UPDATE_CACHE:
         write_df_to_cache(case_to_mut_df, 'mut')
