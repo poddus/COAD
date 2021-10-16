@@ -50,18 +50,21 @@ def main():
         mut_df = join_clin_df(mut_df, clin_df, bool)
 
         # find_collinearity(mut_df)
+
         if config.LOGIT:
             classify_logit(mut_df, 'mutation')
-        if config.GENOME:
+        if config.RANDOMFOREST:
             classify_rf(mut_df, 'mutation')
 
     if config.TRANSCRIPTOME:
         trans_df = munge_transcriptome()
         trans_df = join_clin_df(trans_df, clin_df, float)
 
+        # find_collinearity(trans_df)
+
         if config.LOGIT:
             classify_logit(trans_df, 'transcriptome')
-        if config.GENOME:
+        if config.RANDOMFOREST:
             classify_rf(trans_df, 'transcriptome')
 
     pass

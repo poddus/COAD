@@ -7,9 +7,9 @@ logging.basicConfig(level=logging.INFO)
 pd.set_option('display.expand_frame_repr', False)
 
 # analyses to be prepared and performed
-GENOME = True
+GENOME = False
 TRANSCRIPTOME = True
-LOGIT = True
+LOGIT = False
 RANDOMFOREST = True
 
 USE_CACHED_API_RESPONSE = True
@@ -27,6 +27,7 @@ MUT_REMOVE_RARE_VARIANTS = True
 MUT_RARE_VARIANT_CUTOFF = 1
 CORRELATION_CUTOFF = 0.8
 
+RF_HYPERPARAMETER_TUNING = False
 CLASSIFIER_RANDOM_STATE = 3257
 # CLASSIFIER_RANDOM_STATE = random.randint(0,4294967295)
 CLASSIFIER_TEST_SIZE = 0.33
