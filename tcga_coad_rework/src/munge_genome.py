@@ -35,11 +35,6 @@ def munge_genome() -> pd.DataFrame:
             header=5
         )
 
-    # remove NaNs
-    log_n_hgvsc_null = len(maf_df[maf_df['HGVSc'].isnull()])
-    maf_df.drop(maf_df[maf_df['HGVSc'].isnull()].index, inplace=True)
-    logging.info('{} mutations without HGVSc descriptor were removed'.format(log_n_hgvsc_null))
-
     if config.MUT_REMOVE_KNRAS:
         k_ras_cases = maf_df.loc[maf_df['Hugo_Symbol'] == 'KRAS']['case_id']
         n_ras_cases = maf_df.loc[maf_df['Hugo_Symbol'] == 'NRAS']['case_id']
@@ -54,23 +49,29 @@ def munge_genome() -> pd.DataFrame:
         logging.info('{} synonymous variants were removed'.format(len(synonymous_variants)))
 
     if config.MUT_USE_UVI:
+        # remove NaNs in HGVSc
+        log_n_hgvsc_null = len(maf_df[maf_df['HGVSc'].isnull()])
+        maf_df.drop(maf_df[maf_df['HGVSc'].isnull()].index, inplace=True)
+        logging.info('{} mutations without HGVSc descriptor were removed'.format(log_n_hgvsc_null))
+
         # create unique variant ID, store in column 'uvi'
         # note, there are some NaN in the data set
         maf_df.loc[:, 'uvi'] = pd.Series(maf_df['Hugo_Symbol'] + ':' + maf_df['HGVSc'], index=maf_df.index, dtype=str)
         case_to_mut_df = pd.DataFrame(False, index=maf_df['case_id'].unique(), columns=maf_df.uvi.unique())
         # this following computation is intense
-        logging.debug('generating case_to_mut DataFrame (with uvi). this may take a while...')
+        logging.info('generating case_to_mut DataFrame (with uvi). this may take a while...')
         for case, mutations in maf_df.groupby('case_id')['uvi']:
             for mut in mutations:
                 case_to_mut_df.at[case, mut] = True
-        logging.debug('done')
+        logging.info('done')
     else:
+        # TODO: there are mutations in case_to_mut_df that are monotonously false
         case_to_mut_df = pd.DataFrame(False, index=maf_df['case_id'].unique(), columns=maf_df.Hugo_Symbol.unique())
-        logging.debug('generating case_to_mut DataFrame (without uvi). this may take a while...')
+        logging.info('generating case_to_mut DataFrame (without uvi). this may take a while...')
         for case, mutations in maf_df.groupby('case_id')['Hugo_Symbol']:
             for mut in mutations:
                 case_to_mut_df.at[case, mut] = True
-        logging.debug('done')
+        logging.info('done')
 
     if config.MUT_REMOVE_RARE_VARIANTS:
         logging.info('finding mutations that only occur once in all cases...')

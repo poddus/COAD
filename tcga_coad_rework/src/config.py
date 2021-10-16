@@ -8,7 +8,7 @@ pd.set_option('display.expand_frame_repr', False)
 
 # analyses to be prepared and performed
 GENOME = True
-TRANSCRIPTOME = False
+TRANSCRIPTOME = True
 LOGIT = True
 RANDOMFOREST = True
 
@@ -25,6 +25,7 @@ MUT_HYPERMUTATION_CUTOFF = 250
 MUT_USE_UVI = False
 MUT_REMOVE_RARE_VARIANTS = True
 MUT_RARE_VARIANT_CUTOFF = 1
+CORRELATION_CUTOFF = 0.8
 
 CLASSIFIER_RANDOM_STATE = 3257
 # CLASSIFIER_RANDOM_STATE = random.randint(0,4294967295)

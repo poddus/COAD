@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import List, Tuple
 import numpy as np
 import pandas as pd
@@ -5,10 +6,8 @@ from matplotlib.cm import get_cmap
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
-import seaborn as sns
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.metrics import roc_curve, auc
-from sklearn.metrics import roc_auc_score
 
 from src import config
 
@@ -33,28 +32,57 @@ def get_n_colors(n) -> List:
     return colors_255
 
 
-class LogitClassifier:
-    def __init__(self, df: pd.DataFrame):
+class Classifier(ABC):
+    # @abstractmethod
+    # def split_groups(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    #     """split data into train and test groups"""
+    @abstractmethod
+    def fit_whole(self) -> None:
+        """fit classifier on entire data set"""
+
+    @abstractmethod
+    def fit_train(self) -> None:
+        """fit classifier on training data set"""
+
+    @abstractmethod
+    def eval_roc(self) -> Tuple[List, List, List]:
+        """extract fpr, tpr and thresholds of ROC using test data set"""
+
+    @abstractmethod
+    def print_roc_curve(self, fpr, tpr) -> None:
+        """generate pyplot roc plot and show"""
+
+    @abstractmethod
+    def train_test_roc(self) -> None:
+        """convenience function for training and evaluating a classifier"""
+
+
+class LogitClassifier(Classifier):
+    def __init__(self, df: pd.DataFrame, name: str):
         self.X = df.drop('tumor_left', axis=1)
         self.y = df['tumor_left']
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y,
-            test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE)
+        self.X_train, self.X_test, self.y_train, self.y_test = self.split_groups()
         self.classifier = LogisticRegression()
+        self.name = name
 
-    def fit_whole(self):
+    def split_groups(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+        return train_test_split(
+            self.X, self.y,
+            test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE
+        )
+
+    def fit_whole(self) -> None:
         self.classifier.fit(self.X, self.y)
 
-    def fit_train(self):
+    def fit_train(self) -> None:
         self.classifier.fit(self.X_train, self.y_train)
 
-    def evaluate_on_test(self) -> Tuple[List, List, List]:
+    def eval_roc(self) -> Tuple[List, List, List]:
         y_score = self.classifier.decision_function(self.X_test)
         fpr, tpr, thresholds = roc_curve(self.y_test, y_score)
         return fpr, tpr, thresholds
 
-    @staticmethod
-    def print_roc_curve(fpr, tpr):
+    def print_roc_curve(self, fpr, tpr) -> None:
         plt.figure()
         lw = 2
         plt.plot(fpr, tpr, color='darkorange',
@@ -64,25 +92,20 @@ class LogitClassifier:
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
+        plt.title('ROC of Logit Classifier on {} data'.format(self.name))
         plt.legend(loc="lower right")
         plt.show()
 
-    def evaluate(self):
-        """convenience function for evaluating a classifier"""
+    def train_test_roc(self) -> None:
         self.fit_train()
-        fpr, tpr, threshold = self.evaluate_on_test()
+        fpr, tpr, threshold = self.eval_roc()
         self.print_roc_curve(fpr, tpr)
 
 
-class RFClassifier:
-    def __init__(self, df: pd.DataFrame, n_trees=1000, v=1):
+class RFClassifier(Classifier):
+    def __init__(self, df: pd.DataFrame, name: str, n_trees=1000, v=1):
         self.X = df.drop('tumor_left', axis=1)
         self.y = df['tumor_left']
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(
-            self.X, self.y,
-            test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE)
-
         self.classifier = RandomForestClassifier(
             n_estimators=n_trees,
             criterion='gini',
@@ -101,20 +124,30 @@ class RFClassifier:
             warm_start=False,
             class_weight=None
         )
+        self.name = name
+
+    # def split_groups(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    #     return train_test_split(
+    #         self.X, self.y,
+    #         test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE
+    #     )
 
     def fit_whole(self):
+        # TODO: generates Warning
+        #  UserWarning: X does not have valid feature names, but RandomForestClassifier was fitted with feature names
         self.classifier.fit(self.X, self.y)
 
     def fit_train(self):
-        self.classifier.fit(self.X_train, self.y_train)
+        # self.classifier.fit(self.X_train, self.y_train)
+        pass
 
-    def evaluate_on_test(self) -> Tuple[List, List, List]:
-        y_score = self.classifier.oob_decision_function_
-        fpr, tpr, thresholds = roc_curve(self.y, y_score)
+    def eval_roc(self) -> Tuple[List, List, List]:
+        y_score = self.classifier.oob_decision_function_[:, 1]
+        y_score_df = pd.DataFrame(data=y_score, index=self.X.index)
+        fpr, tpr, thresholds = roc_curve(self.y, y_score_df)
         return fpr, tpr, thresholds
 
-    @staticmethod
-    def print_roc_curve(fpr, tpr):
+    def print_roc_curve(self, fpr, tpr):
         plt.figure()
         lw = 2
         plt.plot(fpr, tpr, color='darkorange',
@@ -124,14 +157,14 @@ class RFClassifier:
         plt.ylim([0.0, 1.05])
         plt.xlabel('False Positive Rate')
         plt.ylabel('True Positive Rate')
-        plt.title('Receiver operating characteristic example')
+        plt.title('ROC of Random Forest Classifier on {} data'.format(self.name))
         plt.legend(loc="lower right")
         plt.show()
 
-    def evaluate(self):
+    def train_test_roc(self):
         """convenience function for evaluating a classifier"""
-        self.fit_train()
-        fpr, tpr, threshold = self.evaluate_on_test()
+        self.fit_whole()
+        fpr, tpr, threshold = self.eval_roc()
         self.print_roc_curve(fpr, tpr)
 
 
