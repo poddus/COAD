@@ -12,8 +12,10 @@ def classify_logit(df: pd.DataFrame, name: str):
         logit = read_model_from_cache(name + '_logit')
     else:
         logit = LogitClassifier(df, name)
+        logit.fit_train()
 
-    logit.train_test_roc()
+    fpr, tpr, threshold = logit.eval_roc()
+    logit.print_roc_curve(fpr, tpr)
 
     if config.UPDATE_CACHE:
         write_model_to_cache(logit, name + '_logit')
@@ -32,14 +34,16 @@ def hyperparameter_tuning(df):
 def classify_rf(df, name: str):
     if config.RF_HYPERPARAMETER_TUNING:
         params = hyperparameter_tuning(df)
-        # TODO: handle params programatically
+        # TODO: handle params programmatically
 
     if config.USE_CACHED_MODELS:
         rforest = read_model_from_cache(name + '_rf')
     else:
         rforest = RFClassifier(df, name)
+        rforest.fit_whole()
 
-    rforest.train_test_roc()
+    fpr, tpr, threshold = rforest.eval_roc()
+    rforest.print_roc_curve(fpr, tpr)
 
     if config.UPDATE_CACHE:
         write_model_to_cache(rforest, name + '_rf')

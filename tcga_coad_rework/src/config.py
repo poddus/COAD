@@ -7,15 +7,15 @@ logging.basicConfig(level=logging.INFO)
 pd.set_option('display.expand_frame_repr', False)
 
 # analyses to be prepared and performed
-GENOME = False
+GENOME = True
 TRANSCRIPTOME = True
-LOGIT = False
+LOGIT = True
 RANDOMFOREST = True
 
 USE_CACHED_API_RESPONSE = True
 USE_CACHED_DATA = True
-USE_CACHED_MODELS = False
-UPDATE_CACHE = True
+USE_CACHED_MODELS = True
+UPDATE_CACHE = False
 
 REMOVE_ANNOTATED_CASES = True
 MUT_REMOVE_KNRAS = True
