@@ -1,0 +1,106 @@
+INFO:root:writing clin_response to file ../cache/gdc_api/clin_response.json
+INFO:root:428 cases have clinical annotations
+INFO:root:39 annotated cases removed from clinical cases.
+INFO:root:no tumor location for case uuid: b612d491-7442-4119-a53c-5ebcc35c31f4
+INFO:root:no tumor location for case uuid: f89bbd17-c732-4847-b71c-a8627a702747
+INFO:root:no tumor location for case uuid: b823d6e5-54b0-43d3-95e2-9be33dc6f734
+INFO:root:no tumor location for case uuid: dbbee8f5-d83d-4195-85cf-f89d327da0a9
+INFO:root:no tumor location for case uuid: bf69a4ce-ec7e-4752-a86d-dcc80e3c9a57
+INFO:root:no tumor location for case uuid: 6cd8d2dd-5545-43b0-b796-ae0506d62eb8
+INFO:root:no tumor location for case uuid: 3334201d-a3c0-45ec-a9ed-cf48cc8c38e8
+INFO:root:no tumor location for case uuid: 75ea63a9-357b-4566-bd78-eaa67809decd
+INFO:root:no tumor location for case uuid: cac80259-3a26-4a99-b0d3-13454068e6ed
+INFO:root:no tumor location for case uuid: a8b4284d-cbbb-43e3-897b-d04af4bfba74
+INFO:root:no tumor location for case uuid: a56f6562-d2af-47b9-bf81-94b3b4893173
+INFO:root:no tumor location for case uuid: 65056295-8fcd-4f82-a3c9-a5acd79521fe
+INFO:root:no tumor location for case uuid: b54865b6-824e-4163-b759-21a6eacc98ce
+INFO:root:no tumor location for case uuid: 9c34830b-4d7f-4b41-9659-fbfc36c145c9
+INFO:root:no tumor location for case uuid: 88832340-46ad-449c-8f81-6a8e5b495510
+INFO:root:no tumor location for case uuid: 3eb37b12-b8b4-40a3-bd8b-f89fc39c05fa
+INFO:root:writing clin to file ../cache/dataframes/clin.csv.gz
+INFO:root:183 cases containing k- or n-RAS mutations were removed
+INFO:root:30409 synonymous variants were removed
+INFO:root:generating case_to_mut DataFrame (without uvi). this may take a while...
+INFO:root:done
+INFO:root:finding mutations that only occur once in all cases...
+INFO:root:case_to_mut_df has 2075 of 18903 total mutations with less than or equal to 1 occurrence
+INFO:root:writing mut to file ../cache/dataframes/mut.csv.gz
+INFO:root:10 most important positive features:
+                 0
+APC       0.365740
+TP53      0.242270
+SCN3A     0.165358
+KMT2C     0.148229
+SPAG17    0.142490
+TMEM132D  0.133634
+PAPPA2    0.132371
+ATRX      0.131560
+PCDH11Y   0.131212
+MUC16     0.124546
+INFO:root:10 most important negative features:
+                0
+AMER1    0.260745
+CSMD2    0.236793
+ZFHX4    0.230457
+BRAF     0.202791
+PIK3CA   0.194263
+EIF2AK4  0.191365
+KMT2D    0.183587
+FLNC     0.172431
+MKRN3    0.171393
+DMXL2    0.169891
+INFO:root:writing mutation_logit to file ../cache/models/mutation_logit.joblib
+INFO:root:10 most important features:
+                 0         1
+BRAF      0.007913  0.038518
+KMT2D     0.006478  0.030959
+FLNC      0.005452  0.026892
+APC       0.005138  0.025913
+KIAA1109  0.003913  0.024698
+SOX4      0.003751  0.023546
+TRRAP     0.003432  0.020350
+AMER1     0.003348  0.018422
+EIF2AK4   0.003221  0.016829
+ZFHX4     0.002826  0.017573
+INFO:root:writing mutation_rf to file ../cache/models/mutation_rf.joblib
+INFO:root:writing trans_response to file ../cache/gdc_api/trans_response.json
+INFO:root:generating case_to_mut. this may take a while...
+INFO:root:writing trans to file ../cache/dataframes/trans.csv.gz
+INFO:root:10 most important positive features:
+                               0
+ENSG00000159182.4   2.209630e-06
+ENSG00000174992.7   9.781614e-07
+ENSG00000198643.5   9.117537e-07
+ENSG00000211598.2   8.243618e-07
+ENSG00000177954.10  7.663472e-07
+ENSG00000211679.2   7.594919e-07
+ENSG00000086548.8   7.498199e-07
+ENSG00000122133.15  7.375356e-07
+ENSG00000108518.7   7.130983e-07
+ENSG00000189060.5   6.663091e-07
+INFO:root:10 most important negative features:
+                               0
+ENSG00000016490.14  1.119005e-06
+ENSG00000143153.11  9.546964e-07
+ENSG00000126709.13  7.700436e-07
+ENSG00000225972.1   7.439140e-07
+ENSG00000274735.1   6.768716e-07
+ENSG00000210196.2   6.203554e-07
+ENSG00000211663.2   6.126052e-07
+ENSG00000187908.14  5.752556e-07
+ENSG00000160181.7   5.631773e-07
+ENSG00000070756.12  5.421963e-07
+INFO:root:writing transcriptome_logit to file ../cache/models/transcriptome_logit.joblib
+INFO:root:10 most important features:
+                           0         1
+ENSG00000159182.4   0.004748  0.031052
+ENSG00000197757.7   0.003743  0.027715
+ENSG00000180806.4   0.003734  0.028138
+ENSG00000107105.13  0.002872  0.023175
+ENSG00000037965.5   0.002347  0.020188
+ENSG00000198346.9   0.001845  0.016306
+ENSG00000101150.16  0.001773  0.016565
+ENSG00000145020.13  0.001699  0.015070
+ENSG00000242407.1   0.001680  0.014718
+ENSG00000131067.15  0.001672  0.017143
+INFO:root:writing transcriptome_rf to file ../cache/models/transcriptome_rf.joblib

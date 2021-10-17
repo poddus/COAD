@@ -26,14 +26,15 @@ def join_clin_df(df: pd.DataFrame, clin_df: pd.DataFrame, datatype: type):
     """
 
     df = df.join(clin_df, how='inner')
-    # inner join causes some mutations with very few cases to lose exactly these
-    # this results in monotonously False columns, which carry no information an must be pruned
-    monotone_muts = find_monotone_mutations(df)
-    df.drop(monotone_muts, axis=1, inplace=True)
 
-    # any change in dtype during joining is corrected here
-    # TODO: upon changing join to 'inner', this may no longer be necessary
     if datatype is bool:
+        # inner join causes some mutations with very few cases to lose exactly these
+        # this results in monotonously False columns, which carry no information an must be pruned
+        monotone_muts = find_monotone_mutations(df)
+        df.drop(monotone_muts, axis=1, inplace=True)
+
+        # any change in dtype during joining is corrected here
+        # TODO: upon changing join to 'inner', this may no longer be necessary
         df = df.astype(bool)
     else:
         df['tumor_left'] = df['tumor_left'].astype(bool)

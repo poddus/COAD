@@ -1,10 +1,10 @@
-from abc import ABC, abstractmethod
+import logging
 from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
-from matplotlib.cm import get_cmap
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegressionCV, LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import roc_curve, auc
@@ -12,51 +12,13 @@ from sklearn.metrics import roc_curve, auc
 from src import config
 
 
-def get_n_colors(n) -> List:
-    """return list of colors from viridis colorspace"""
-
-    cmap = get_cmap('viridis')
-    colors_01 = cmap(np.linspace(0, 1, n))
-    colors_255 = []
-
-    for row in colors_01:
-        colors_255.append(
-            'rgba({}, {}, {}, {}'.format(
-                row[0] * 255,
-                row[1] * 255,
-                row[2] * 255,
-                row[3]
-            )
-        )
-
-    return colors_255
-
-
-class Classifier(ABC):
-
-    @abstractmethod
-    def fit_whole(self) -> None:
-        """fit classifier on entire data set"""
-
-    @abstractmethod
-    def eval_roc(self) -> Tuple[List, List, List]:
-        """extract fpr, tpr and thresholds of ROC using test data set"""
-
-    @abstractmethod
-    def print_roc_curve(self, fpr, tpr) -> None:
-        """generate pyplot roc plot and show"""
-
-    @abstractmethod
-    def train_test_roc(self) -> None:
-        """convenience function for training and evaluating a classifier"""
-
-
-class LogitClassifier(Classifier):
+class LogitClassifier:
     def __init__(self, df: pd.DataFrame, name: str):
+        self.df = df
         self.X = df.drop('tumor_left', axis=1)
         self.y = df['tumor_left']
         self.X_train, self.X_test, self.y_train, self.y_test = self.split_groups()
-        self.classifier = LogisticRegression()
+        self.classifier = LogisticRegression(random_state=config.CLASSIFIER_RANDOM_STATE)
         self.name = name
 
     def split_groups(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -95,8 +57,35 @@ class LogitClassifier(Classifier):
         fpr, tpr, threshold = self.eval_roc()
         self.print_roc_curve(fpr, tpr)
 
+    def get_n_most_important(self, n: int = 10, sign: 'str' = 'positive', plot: bool = True):
+        """Return Variants whose Regression Coefficients are largest."""
 
-class RFClassifier(Classifier):
+        coefs = pd.DataFrame(index=self.X.columns, data=self.classifier.fit(self.X, self.y).coef_[0])
+
+        if sign == 'positive':
+            n_coefs = coefs.sort_values(by=0).tail(n)[::-1]
+        elif sign == 'negative':
+            n_coefs = coefs.sort_values(by=0).head(n).abs()
+        else:
+            raise ValueError('`sign` may only be either `positive` or negative, got {}'.format(sign))
+
+        logging.info('{} most important {} features:\n{}'.format(n, sign, n_coefs))
+
+        if plot:
+            fig, ax = plt.subplots()
+            y_pos = np.arange(len(n_coefs))
+
+            ax.barh(y_pos, n_coefs[0].values)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(n_coefs.index)
+            ax.invert_yaxis()  # labels read top-to-bottom
+            ax.set_xlabel('|Coefficient|')
+            ax.set_title('{} most important {} features, Logistic Regression'.format(n, sign))
+
+            plt.show()
+
+
+class RFClassifier:
     def __init__(self, df: pd.DataFrame, name: str, n_trees: int = 6000, max_depth: int = 13, v: int = 1):
         self.X = df.drop('tumor_left', axis=1)
         self.y = df['tumor_left']
@@ -119,12 +108,6 @@ class RFClassifier(Classifier):
             class_weight=None
         )
         self.name = name
-
-    # def split_groups(self) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    #     return train_test_split(
-    #         self.X, self.y,
-    #         test_size=config.CLASSIFIER_TEST_SIZE, random_state=config.CLASSIFIER_RANDOM_STATE
-    #     )
 
     def fit_whole(self):
         # TODO: generates Warning
@@ -156,6 +139,29 @@ class RFClassifier(Classifier):
         self.fit_whole()
         fpr, tpr, threshold = self.eval_roc()
         self.print_roc_curve(fpr, tpr)
+
+    def get_n_most_important(self, n: int = 10, plot: bool = True):
+        importances = self.classifier.feature_importances_
+        std = np.std([tree.feature_importances_ for tree in self.classifier.estimators_], axis=0)
+
+        coefs = pd.DataFrame(index=self.X.columns, data=importances)
+        coefs[1] = std
+        n_coefs = coefs.sort_values(by=0).tail(n)[::-1]
+
+        logging.info('{} most important features:\n{}'.format(n, n_coefs))
+
+        if plot:
+            fig, ax = plt.subplots()
+            y_pos = np.arange(len(n_coefs))
+
+            ax.barh(y_pos, n_coefs[0].values, xerr=n_coefs[1].values)
+            ax.set_yticks(y_pos)
+            ax.set_yticklabels(n_coefs.index)
+            ax.invert_yaxis()  # labels read top-to-bottom
+            ax.set_xlabel('Gini Importance')
+            ax.set_title('{} most important features, Random Forest'.format(n))
+
+            plt.show()
 
 
 class RFClassifierTuningCV:

@@ -16,6 +16,8 @@ def classify_logit(df: pd.DataFrame, name: str):
 
     fpr, tpr, threshold = logit.eval_roc()
     logit.print_roc_curve(fpr, tpr)
+    logit.get_n_most_important(sign='positive')
+    logit.get_n_most_important(sign='negative')
 
     if config.UPDATE_CACHE:
         write_model_to_cache(logit, name + '_logit')
@@ -44,6 +46,7 @@ def classify_rf(df, name: str):
 
     fpr, tpr, threshold = rforest.eval_roc()
     rforest.print_roc_curve(fpr, tpr)
+    rforest.get_n_most_important()
 
     if config.UPDATE_CACHE:
         write_model_to_cache(rforest, name + '_rf')

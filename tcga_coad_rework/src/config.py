@@ -2,7 +2,7 @@ import random
 import pandas as pd
 import logging
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(filename='../results/info.log', filemode='w', level=logging.INFO)
 
 pd.set_option('display.expand_frame_repr', False)
 
@@ -12,10 +12,10 @@ TRANSCRIPTOME = True
 LOGIT = True
 RANDOMFOREST = True
 
-USE_CACHED_API_RESPONSE = True
-USE_CACHED_DATA = True
-USE_CACHED_MODELS = True
-UPDATE_CACHE = False
+USE_CACHED_API_RESPONSE = False
+USE_CACHED_DATA = False
+USE_CACHED_MODELS = False
+UPDATE_CACHE = True
 
 REMOVE_ANNOTATED_CASES = True
 MUT_REMOVE_KNRAS = True
