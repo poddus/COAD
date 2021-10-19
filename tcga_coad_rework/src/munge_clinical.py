@@ -12,16 +12,20 @@ from src.munge_common import extract_uuid_and_filenames_from_manifest, build_ass
 
 def extract_tumor_location(df: pd.DataFrame) -> pd.DataFrame:
     tumor_location = {}
+    msi_status = {}  # only 85 of 388 cases (about 0.22) have reported MSI Status, so this information is not used
     for case, file in df.iterrows():
         # `file` contains uuid and path
         filepath = file[1]
         log_n_not_left_or_right = 0
+
         if not os.path.exists(filepath):
             logging.debug('File {}\nCase {}\nDoes not exist!\n--------------'.format(file, case))
         else:
             with open(filepath, 'r') as f:
                 tree = ElementTree.parse(f)
                 root = tree.getroot()
+
+                msi_status[case] = root[1][45].text
 
                 anatomic_neoplasm_subdivision = root[1][34].text
                 if anatomic_neoplasm_subdivision in config.ANATOMIC_RIGHT:
